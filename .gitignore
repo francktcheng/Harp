@@ -97,3 +97,8 @@ website/static/
 
 # Visual Studio Code
 .vscode
+
+# ctag files
+srclist
+run_ctags.sh
+tags
