@@ -1,4 +1,4 @@
-# Harp-DAAL-2018 
+# Harp-DAAL-2017 
 
 Harp-DAAL-2018 is a distributed machine learning framework built upon Harp, a Hadoop plug-in for collective-communication on Big Data problems, and Intel Data Analytics Acceleration Library (DAAL). 
 
