@@ -2,9 +2,13 @@ package fascia;
 
 
 public class dynamic_table_array extends dynamic_table{
+    // subtemplate-vertex-colorset
     private float[][][] table;
+    // vertex-colorset
     private float[][] cur_table;
+    // vertex-colorset
     private float[][] cur_table_active;
+    // vertex-colorset
     private float[][] cur_table_passive;
 
     int cur_sub;
@@ -13,11 +17,16 @@ public class dynamic_table_array extends dynamic_table{
     public void init(Graph[] subtemplates, int num_subtemplates, int num_vertices, int num_colors) {
         this.subtemplates = subtemplates;
         this.num_subs = num_subtemplates;
+        //num of vertices of full graph 
         this.num_verts = num_vertices;
         this.num_colors = num_colors;
+
+        //obtain the table,choose j color from i color, the num of combinations
         init_choose_table();
+        //obtain color sets for each subtemplate
         init_num_colorsets();
 
+        // the core three-dimensional arrays in algorithm
         table = new float[ this.num_subs ][][];
 
         assert(table != null);
@@ -71,17 +80,23 @@ public class dynamic_table_array extends dynamic_table{
 
     @Override
     public void clear_sub(int subtemplate) {
-        for(int v = 0; v < num_verts; ++v){
-            if( table[subtemplate][v] != null){
-                table[subtemplate][v] = null;
+
+        if (table[subtemplate] != null)
+        {
+
+            for(int v = 0; v < num_verts; ++v){
+                if( table[subtemplate][v] != null){
+                    table[subtemplate][v] = null;
+                }
             }
-        }
 
-        if( is_sub_inited[subtemplate]){
-            table[subtemplate] = null;
-        }
+            if( is_sub_inited[subtemplate]){
+                table[subtemplate] = null;
+            }
 
-        is_sub_inited[subtemplate] = false;
+            is_sub_inited[subtemplate] = false;
+
+        }
     }
 
     @Override

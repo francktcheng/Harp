@@ -8,6 +8,7 @@ import java.util.Set;
 
 public class partitioner {
 
+    //a chain of created subtemplates
     private Graph[] subtemplates_create;
     private Graph[] subtemplates;
     private Graph subtemplate;
@@ -25,10 +26,12 @@ public class partitioner {
     private boolean labeled;
 
     public partitioner(){}
+
     public partitioner(Graph t, boolean label, int[] label_map){
         init_arrays();
         labeled = label;
         subtemplates_create[0] = t;
+        //start from 1
         current_creation_index = 1;
 
         if(labeled){
@@ -37,17 +40,21 @@ public class partitioner {
         parents.add(Constants.NULL_VAL);
 
         int root = 0;
+
+        //recursively partition the template
         partition_recursive(0, root);
+
         fin_arrays();
 
     }
+
     void clear_temparrays(){
         subtemplates = null;
         count_needed = null;
     }
 
     //Do a bubble sort based on each subtemplate's parents' index
-    //This is a smple way to organize the partition tree for use
+    //This is a simple way to organize the partition tree for use
     // with dt.init_sub() and memory management of dynamic table
     public void sort_subtemplates(){
         boolean swapped;
@@ -135,6 +142,7 @@ public class partitioner {
     }
 
     private void partition_recursive(int s, int root){
+
         //split the current subtemplate using the current root
         int[] roots = split(s, root);
 
@@ -169,11 +177,16 @@ public class partitioner {
 
     private int[] split(int s, int root){
         //get new root
+        //get adjacency vertices of the root vertex
         int[] adjs = subtemplates_create[s].adjacent_vertices(root);
+
+        //get the first adjacent vertex
         int u = adjs[0];
 
         //split this subtemplate between root and node u
+        //create a subtemplate rooted at root
         int active_root = split_sub(s, root, u);
+        //create a subtemplate rooted at u
         int passive_root = split_sub(s, u, root);
 
         int[] retval = new int[2];
@@ -201,6 +214,8 @@ public class partitioner {
         //if a new edge is found, add it
 
         List<Integer> next = new ArrayList<>();
+        //start from the root
+        //record all the edges in template execpt for other root branch
         next.add(root);
         int cur_next = 0;
         while( cur_next < next.size()){
@@ -208,9 +223,12 @@ public class partitioner {
             int[] adjs = subtemplate.adjacent_vertices(u);
             int end = subtemplate.out_degree(u);
 
+            //loop over all the adjacent vertices of u
             for(int i = 0; i < end; i++){
                 int v = adjs[i];
                 boolean add_edge = true;
+
+                //avoiding add repeated edges
                 for(int j = 0; j < dsts.size(); j++){
                     if(  srcs.get(j) == v && dsts.get(j) == u){
                         add_edge = false;
@@ -255,16 +273,16 @@ public class partitioner {
             }
         }
 
+        //convert list<Interger> to int[] 
         int[] srcs_array = Util.dynamic_to_static(srcs);
         int[] dsts_array = Util.dynamic_to_static(dsts);
 
+        //create a subtemplate
         subtemplates_create[current_creation_index].init(n, m, srcs_array, dsts_array, labels, labeled);
         current_creation_index++;
 
         if(labeled)
             label_maps.add(labels);
-
-
 
         return srcs.get(0);
 
@@ -281,6 +299,7 @@ public class partitioner {
         passive_children = new ArrayList<Integer>();
         label_maps = new ArrayList<int[]>();
     }
+
     //Finalize arrays
     //Delete the creation array and make a final one of appropriate size
     private void fin_arrays(){
@@ -305,6 +324,8 @@ public class partitioner {
      * Check nums 'closes the gaps' in the srcs and dsts arrays
      * Can't initialize a graph with edges (0,2),(0,4),(2,5)
      * This changes the edges to (0,1),(0,2),(1,3)
+     *
+     * This reassign vertex id in the subtemplate
     */
     private void check_nums(int root, List<Integer> srcs, List<Integer> dsts, int[] labels, int[] labels_sub){
         int maximum = Util.get_max(srcs, dsts);

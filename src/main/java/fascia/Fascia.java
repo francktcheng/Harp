@@ -14,6 +14,15 @@ import java.util.List;
  */
 public class Fascia {
 
+    /**
+     * @brief read in graph data in pairs of edges
+     *
+     * @param g
+     * @param graph_file
+     * @param labeled
+     *
+     * @return 
+     */
     private void read_in_graph(Graph g, String graph_file, boolean labeled){
 
         try{
@@ -23,12 +32,17 @@ public class Fascia {
 
             int n_g, m_g;
 
+            //get number of nodes (vertice)
             n_g = Integer.parseInt( reader.readLine() );
+            //get number of edges
             m_g = Integer.parseInt( reader.readLine() );
 
             int[] srcs_g = new int[m_g];
             int[] dsts_g = new int[m_g];
+
             int[] labels_g;
+
+            // what are those labels ?
             if( labeled){
                 labels_g = new int[n_g];
                 for(int i = 0; i < n_g; ++i){
@@ -39,9 +53,11 @@ public class Fascia {
             }
 
             for(int i = 0; i < m_g; ++i){
+
                 String[] src_dst = reader.readLine().split("\\s+");
                 srcs_g[i] = Integer.parseInt(src_dst[0]  );
                 dsts_g[i] = Integer.parseInt( src_dst[1] );
+
             }
 
             in.close();
@@ -87,27 +103,31 @@ public class Fascia {
     private void run_single(String graph_file, String template_file, boolean labeled, boolean do_vert, boolean do_gdd,
                             int iterations, boolean do_outerloop, boolean calculate_automorphism, boolean verbose, boolean timing)  {
 
+        //graph data
         Graph g = new Graph();
+        //template date
         Graph t = new Graph();
 
-        String vert_file;
-        String gdd_file;
+        // String vert_file;
+        // String gdd_file;
+        //
+        // if( do_vert){
+        //     vert_file = template_file + ".vert";
+        //     System.err.println("do_vert skipped");
+        // }
+        // if(do_gdd ){
+        //     gdd_file = template_file + ".gdd";
+        //     System.err.println("do_gdd skipped");
+        // }
 
-        if( do_vert){
-            vert_file = template_file + ".vert";
-            System.err.println("do_vert skipped");
-        }
-        if(do_gdd ){
-            gdd_file = template_file + ".gdd";
-            System.err.println("do_gdd skipped");
-        }
+        //input file has pairs of edges in graph
         long readbegin = System.currentTimeMillis();
         read_in_graph(g, graph_file, labeled);
         read_in_graph(t, template_file, labeled);
+
 	    System.out.println("Loading graph takes: " + (System.currentTimeMillis()-readbegin) + "ms");
 
         long elt = System.currentTimeMillis();
-
 
         double full_count = 0.0;
 

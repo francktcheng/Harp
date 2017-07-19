@@ -10,29 +10,47 @@ public class colorcount {
 
     Graph g;
     Graph t;
+
+    //may not use them 
     int[] labels_g;
     int[] labels_t;
+
+    //randomly assigned color values to each vertex of 
+    //graph
     int[] colors_g;
     boolean labeled;
 
+    //partitioned subtemplates
     Graph[] subtemplates;
+
     int subtemplate_count;
+
     int num_colors;
     int num_iter;
     int cur_iter;
 
+    //for dynamic programming ?
     dynamic_table_array dt;
+    //for partitioning a template
     partitioner part;
 
+    // what is this ?
     int[][] choose_table;
+    // temp index sets to construct comb_num_indexes 
     int[][][][] index_sets;
+    // temp index sets to construct comb_num_indexes 
     int[][][][][] color_sets;
+    // record comb num values for active and passive children 
     int[][][][] comb_num_indexes;
+    // record comb num values for each subtemplate and each color combination
     int[][] comb_num_indexes_set;
+    // vertices num of each subtemplate 
     int[] num_verts_table;
+    // what is this ?
     int num_verts_graph;
     int max_degree;
 
+    // what is this ?
     double[] final_vert_counts;
     boolean do_graphlet_freq;
     boolean do_vert_output;
@@ -43,6 +61,7 @@ public class colorcount {
     int total_count;
     int read_count;
 
+    //inovoked in Fascia.java
     void init(Graph full_graph, boolean calc_auto, boolean do_gdd, boolean do_vert, boolean verb){
         g = full_graph;
         num_verts_graph = g.num_vertices();
@@ -52,6 +71,8 @@ public class colorcount {
         do_vert_output = do_vert;
         calculate_automorphisms = calc_auto;
         verbose = verb;
+
+        //initialize dynamic table
         dt = new dynamic_table_array();
 
         if( do_graphlet_freq || do_vert_output){
@@ -59,6 +80,7 @@ public class colorcount {
         }
     }
 
+    // the outer iteration
     double do_full_count(Graph template, int N){
         num_iter = N;
         t = template;
@@ -69,6 +91,7 @@ public class colorcount {
             LOG.info("Begining partition...");
         }
 
+        //partition the template into subtemplates 
         part = new partitioner(t, labeled, labels_t);
         part.sort_subtemplates();
 
@@ -76,14 +99,20 @@ public class colorcount {
             LOG.info("done partitioning");
         }
 
+        //colors equals the num of vertices
         num_colors = t.num_vertices();
+        //get array of subtemplates
         subtemplates = part.get_subtemplates();
+        //subtemplates num
         subtemplate_count = part.get_subtemplate_count();
 
+        //obtain the hash values table for each subtemplate and a combination of color sets
         create_tables();
+
+        //initialize dynamic prog table, with subtemplate-vertices-color array
         dt.init(subtemplates, subtemplate_count, g.num_vertices(), num_colors);
 
-        //determine max out degree
+        //determine max out degree for the data graph
         int max_out_degree = 0;
         for(int i =0; i < num_verts_graph; i++){
             int out_degree_i = g.out_degree(i);
@@ -97,13 +126,14 @@ public class colorcount {
             LOG.info("n "+ num_verts_graph + ", max degree " + max_out_degree);
         }
 
-        //begin the counting
+        //begin the counting 
         double count = 0.0;
         for(cur_iter = 0; cur_iter < N; cur_iter++){
             long elt = 0;
             if(verbose){
                 elt = System.currentTimeMillis();
             }
+            //get template counts
             count += template_count();
             if(verbose){
                 elt = System.currentTimeMillis() - elt;
@@ -112,6 +142,7 @@ public class colorcount {
         }
 
         double final_count = count / (double) N;
+        //formula to compute the prob 
         double prob_colorful = Util.factorial(num_colors) /
                 ( Util.factorial(num_colors - t.num_vertices()) * Math.pow(num_colors, t.num_vertices()) );
 
@@ -154,9 +185,9 @@ public class colorcount {
     //Return the full scaled count for the template on the whole graph
     private double template_count(){
         //do random coloring for full graph
-
         Random rand = new Random();
 
+        //vertice num of the full graph, huge
         int num_verts = g.num_vertices();
         colors_g = new int[num_verts];
 
@@ -169,10 +200,11 @@ public class colorcount {
         */
 
         //multi-threading
-
         //recording the start and end index
+        //num_verts assigned to each thread
         int[] chunks = divide_chunks(num_verts, Constants.THREAD_NUM);
 
+        //coloring the full graph (all the vertices)
         Thread[] threads = new Thread[Constants.THREAD_NUM];
         for(int t = 0; t < Constants.THREAD_NUM; ++t){
             final int index = t;
@@ -185,6 +217,7 @@ public class colorcount {
             };
             threads[t].start();
         }
+
         //waiting for threads to die
         for(int t =0 ; t < Constants.THREAD_NUM; ++t){
             try {
@@ -209,9 +242,11 @@ public class colorcount {
 
             int a = part.get_active_index(s);
             int p = part.get_passive_index(s);
+
             dt.init_sub(s, a, p);
 
             long elt = 0;
+            //hit the bottom
             if( num_verts_sub == 1){
                 if(verbose){
                     elt = System.currentTimeMillis();
@@ -292,6 +327,7 @@ public class colorcount {
     }
 
 
+    //s is subtemplate index
     private void init_table_node(int s){
 
          /*
@@ -314,6 +350,7 @@ public class colorcount {
                 threads[t] = new Thread() {
                     public void run() {
                         for (int v = chunks[index]; v < chunks[index + 1]; ++v) {
+                            //get the randomly assigned color value
                             int n = colors_g[v];
                             dt.set(v, comb_num_indexes_set[s][n], 1.0f);
                         }
@@ -352,21 +389,27 @@ public class colorcount {
 
     private float colorful_count(int s){
 
+        //get vert num of subtemplate
         int num_verts_sub = subtemplates[s].num_vertices();
 
+        //get vert num of active child 
         int active_index = part.get_active_index(s);
         int num_verts_a = num_verts_table[active_index];
+        // colorset combinations from active child
         int num_combinations = choose_table[num_verts_sub][num_verts_a];
 
 
         long elt = System.currentTimeMillis();
 
         int[] chunks = divide_chunks(num_verts_graph, Constants.THREAD_NUM);
+
         Thread[] threads = new Thread[Constants.THREAD_NUM];
         final int[] set_count_loop = new int[Constants.THREAD_NUM];
         final int[] total_count_loop = new int[Constants.THREAD_NUM];
         final int[] read_count_loop = new int[Constants.THREAD_NUM];
+
         final float[] cc = new float[Constants.THREAD_NUM];
+
         for (int t = 0; t < Constants.THREAD_NUM; ++t) {
             final int index = t;
             threads[t] = new Thread() {
@@ -375,14 +418,21 @@ public class colorcount {
                     int[] valid_nbrs = new int[max_degree];
                     assert(valid_nbrs != null);
                     int valid_nbrs_count = 0;
+
+                    // each thread for a chunk
                     for (int v = chunks[index]; v < chunks[index + 1]; ++v) {
+
                         valid_nbrs_count = 0;
 
+                        //table v must be initialized
                         if( dt.is_vertex_init_active(v)){
+
                             int[] adjs = g.adjacent_vertices(v);
                             int end = g.out_degree(v);
                             float[] counts_a = dt.get_active(v);
+
                             ++read_count_loop[index];
+
                             for(int i = 0; i < end; ++i){
                                 int adj_i = adjs[i];
                                 if(dt.is_vertex_init_passive(adj_i)){
@@ -391,12 +441,16 @@ public class colorcount {
                             }
 
                             if(valid_nbrs_count != 0){
+
                                 int num_combinations_verts_sub = choose_table[num_colors][num_verts_sub];
 
                                 for(int n = 0; n < num_combinations_verts_sub; ++n){
+
                                     float color_count = 0.0f;
+
                                     int[] comb_indexes_a = comb_num_indexes[0][s][n];
                                     int[] comb_indexes_p = comb_num_indexes[1][s][n];
+
                                     int p = num_combinations -1;
                                     for(int a = 0; a < num_combinations; ++a, --p){
                                         float count_a = counts_a[comb_indexes_a[a]];
@@ -427,6 +481,7 @@ public class colorcount {
                     valid_nbrs = null;
                 }
             };
+
             threads[t].start();
         }
         /*The following part is replaced by multi-threading*/
@@ -506,12 +561,20 @@ public class colorcount {
     }
 
     private void create_tables(){
+        //C_n^k compute the unique number of color set choices 
+        //two dimensional
         choose_table = Util.init_choose_table(num_colors);
+        //record vertices number of each subtemplate
         create_num_verts_table();
+        //create color index for each combination of different set size
         create_all_index_sets();
+        //create color sets for all subtemplates
         create_all_color_sets();
+        //convert colorset combination into numeric values (hash function)
         create_comb_num_system_indexes();
+        //free up memory space 
         delete_all_color_sets();
+        //free up memory space
         delete_all_index_sets();
     }
 
@@ -524,30 +587,48 @@ public class colorcount {
         num_verts_table = null;
     }
 
+    //record vertices number of each subtemplate
     private void create_num_verts_table(){
         num_verts_table = new int[subtemplate_count];
         for(int s = 0; s < subtemplate_count; ++s){
             num_verts_table[s] = subtemplates[s].num_vertices();
         }
     }
+
     private void create_all_index_sets(){
+
+        //first dim (up to) how many colors
         index_sets = new int[num_colors][][][];
 
         for(int i = 0; i < (num_colors -1 ); ++i){
+
             int num_vals = i + 2;
+
             index_sets[i] = new int[num_vals -1][][];
+
+            // second dim, for up to num_vals colors, has different set sizes
             for(int j = 0; j < (num_vals - 1); ++j){
+
                 int set_size = j + 1;
+
                 int num_combinations = Util.choose(num_vals, set_size);
+                // third dim, for a set size, how many combinations from a given num of colors
                 index_sets[i][j] = new int[num_combinations][];
 
+                //set start from 1 to set_size
+                //init set in increase order
                 int[] set = Util.init_permutation(set_size);
 
                 for(int k = 0; k < num_combinations; ++k){
+
+                    // fourth dim, for a combination, having a set_size of color values
                     index_sets[i][j][k] = new int[set_size];
+
                     for(int p = 0; p < set_size; ++p){
                         index_sets[i][j][k][p] = set[p] - 1;
                     }
+
+                    // permutate the color set
                     Util.next_set(set, set_size, num_vals);
                 }
                 set = null;
@@ -557,23 +638,36 @@ public class colorcount {
 
 
     private void create_all_color_sets(){
+
+        //first dim, num of subtemplates
         color_sets = new int[subtemplate_count][][][][];
 
         for(int s = 0; s < subtemplate_count; ++s){
+
             int num_verts_sub = subtemplates[s].num_vertices();
 
             if( num_verts_sub > 1){
+
+                //determine how many sets in a subtemplate
+                //choose num vertices of subtemplate from colors
                 int num_sets = Util.choose(num_colors, num_verts_sub);
+
+                //second dim, num of sets in a subtemplate 
                 color_sets[s] = new int[num_sets][][][];
 
+                //init permutation in colorset
                 int[] colorset = Util.init_permutation(num_verts_sub);
+
                 for(int n = 0; n < num_sets; ++n){
+
                     int num_child_combs = num_verts_sub - 1;
+                    //third dim, for a subtemplate, a set, how many child combinations
                     color_sets[s][n] = new int[num_child_combs][][];
 
                     for(int c = 0; c < num_child_combs; ++c){
                         int num_verts_1 = c + 1;
                         int num_verts_2 = num_verts_sub - num_verts_1;
+
                         int[][] index_set_1 = index_sets[num_verts_sub-2][num_verts_1-1];
                         int[][] index_set_2 = index_sets[num_verts_sub-2][num_verts_2-1];
 
@@ -598,26 +692,37 @@ public class colorcount {
     }
 
 
+    //hashtable like comb_num_system
     private void create_comb_num_system_indexes(){
+
         comb_num_indexes = new int[2][subtemplate_count][][];
         comb_num_indexes_set = new int[subtemplate_count][];
 
+        // each subtemplate
         for(int s = 0; s < subtemplate_count; ++s){
+
             int num_verts_sub = subtemplates[s].num_vertices();
             int num_combinations_s = Util.choose(num_colors, num_verts_sub);
 
             if( num_verts_sub > 1){
+                //for active and passive children  
                 comb_num_indexes[0][s] = new int[num_combinations_s][];
                 comb_num_indexes[1][s] = new int[num_combinations_s][];
             }
 
             comb_num_indexes_set[s] = new int[num_combinations_s];
+
             int[] colorset_set = Util.init_permutation(num_verts_sub);
 
+            //loop over each combination instance
             for(int n = 0; n < num_combinations_s; ++n){
+
+                //get the hash value for a colorset instance
+                //Util.get_color_index the impl of hash function
                 comb_num_indexes_set[s][n] = Util.get_color_index(colorset_set, num_verts_sub);
 
                 if( num_verts_sub > 1){
+
                     int num_verts_a = part.get_num_verts_active(s);
                     int num_verts_p = part.get_num_verts_passive(s);
 
@@ -644,11 +749,15 @@ public class colorcount {
                         comb_num_indexes[1][s][n][p] = color_index_p;
                     }
                 }
+
+                //permutate the colorset_set
                 Util.next_set(colorset_set, num_verts_sub, num_colors);
+
             }
             colorset_set = null;
         }
     }
+
     private void delete_comb_num_system_indexes(){
         for(int s = 0; s < subtemplate_count; ++s){
             int num_verts_sub = subtemplates[s].num_vertices();
