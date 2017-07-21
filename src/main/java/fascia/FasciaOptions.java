@@ -21,6 +21,8 @@ public class FasciaOptions {
         public static final String TIMING_OPTION="r";
         public static final String QUESTION_OPTION="?";
         public static final String THREAD_NUM_OPTION="thread";
+        public static final String CORE_NUM_OPTION="core";
+        public static final String AFFINITY_OPTION="affinity";
     }
 
 
@@ -37,6 +39,8 @@ public class FasciaOptions {
     int motif = 0;
     boolean timing;
     int thread_num = 1;
+    int core_num = 12;
+    String thd_affinity = "compact";
 
     public void print_info_short(){
         System.out.println("\nTo run: fascia [-g graphfile] [-t template || -b batchfile] [options]");
@@ -111,10 +115,14 @@ public class FasciaOptions {
         options.addOption(OPTS.TIMING_OPTION, false, "timing");
         options.addOption(OPTS.QUESTION_OPTION, false, "questions?");
         options.addOption(OPTS.THREAD_NUM_OPTION, true, "number of threads");
+        options.addOption(OPTS.CORE_NUM_OPTION, true, "number of cores");
+        options.addOption(OPTS.AFFINITY_OPTION, true, "thread affinity");
 
         CommandLineParser parser = new GnuParser();
         HelpFormatter formatter = new HelpFormatter();
+
         try {
+
             CommandLine line = parser.parse(options, args);
 
             if(line.hasOption(OPTS.HELP_OPTION)){
@@ -198,6 +206,15 @@ public class FasciaOptions {
 
             if(line.hasOption(OPTS.THREAD_NUM_OPTION)){
                 thread_num = Integer.parseInt(line.getOptionValue(OPTS.THREAD_NUM_OPTION));
+            }
+
+            if(line.hasOption(OPTS.CORE_NUM_OPTION)){
+                core_num = Integer.parseInt(line.getOptionValue(OPTS.CORE_NUM_OPTION));
+            }
+
+            if(line.hasOption(OPTS.AFFINITY_OPTION))
+            {
+                thd_affinity = line.getOptionValue(OPTS.AFFINITY_OPTION);
             }
 
         }catch(Exception e){

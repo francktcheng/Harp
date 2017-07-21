@@ -8,21 +8,40 @@ echo $LIBJARS
 
 DataDir=/scratch/lc37/Fascia-Data
 # ResDir=/N/u/lc37/Project/Harp-Graph-Counting/Results/Fascia-Java
-ResDir=/N/u/lc37/Project/Harp-Graph-Counting/Results/LRT-Test
+# ResDir=/N/u/lc37/Project/Harp-Graph-Counting/Results/LRT-Test
+ResDir=/N/u/lc37/Project/Harp-Graph-Counting/Results/Thd-Scale
 
 # if [ $# < 3 ] ; then
 # echo "usage: <graph> <template> <threadnum>"
 # exit 1;
 # fi
 
-# graph=nyc.graph
-graph=miami.graph
+graph=nyc.graph
+# graph=miami.graph
 # graph=gnp.1.20.graph
 # template=u3-1.fascia
 template=u5-1.fascia
-thd=24
+
+# thd=12
+# thd=24
+thd=48
+
+# 2 sockets * 12 cores each socket on haswell Intel(R) Xeon(R) CPU E5-2670 v3 @ 2.30GHz
+core_num=24 
+
+# affinity_typ=compact
+affinity_typ=scatter
+
 paral=HJLIB
 # paral=JThd
+if [ "$paral" == "JThd" ];then
+    exe=Fascia
+else
+    exe=FasciaHJ
+fi
+
+# exe=Fascia
+# exe=FasciaHJ
 Itr=10
 # Itr=100
 # Itr=1000
@@ -32,9 +51,9 @@ Itr=10
 for round in 1 
 do
 
-echo "Start Exp on: $graph with template: $template and thread num: $thd itr: $Itr parallel imple: $paral Round: $round"
-java -cp ${LIBJARS} fascia.Fascia fascia -g ${DataDir}/graphs/$graph -t ${DataDir}/templates/$template -thread $thd -r -i $Itr > $ResDir/Fascia-Java-$graph-$template-Thd$thd-Itr$Itr-Paral-$paral-round$round.log 
-echo "End Exp on: $graph with template: $template and thread num: $thd itr: $Itr parallel imple: $paral Round: $round"
+echo "Start Exp $exe on: $graph with template: $template and thread num: $thd core_num: $core_num itr: $Itr parallel imple: $paral affinity: $affinity_typ Round: $round"
+java -cp ${LIBJARS} fascia.${exe} fascia -g ${DataDir}/graphs/$graph -t ${DataDir}/templates/$template -thread $thd -core $core_num -affinity $affinity_typ -r -i $Itr > $ResDir/Fascia-Java-$graph-$template-Thd$thd-Core$core_num-Itr$Itr-Paral-$paral-$affinity_typ-round$round.log 
+echo "End Exp $exe on: $graph with template: $template and thread num: $thd core_num: $core_num itr: $Itr parallel imple: $paral affinity: $affinity_typ Round: $round"
 
 done
 

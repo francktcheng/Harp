@@ -101,7 +101,7 @@ public class colorcount_HJ {
     private double count_ato = 0;
 
     //hardcode cores per node on Juliet low-end node
-    private int cpn = 24;  
+    // private int cpn = 24;  
 
     //inovoked in Fascia.java
     void init(Graph full_graph, boolean calc_auto, boolean do_gdd, boolean do_vert, boolean verb){
@@ -182,15 +182,22 @@ public class colorcount_HJ {
         launchHabaneroApp( () -> forallChunked(0, Constants.THREAD_NUM-1, (threadIdx) -> {
 
             //set Java threads affinity
-            BitSet bitSet = new BitSet(cpn);
+            BitSet bitSet = new BitSet(Constants.CORE_NUM);
+            int thread_mask = 0;
 
-            //implement threads bind by core round-robin
-            // int thread_mask = threadIdx%cpn; 
+            if (Constants.THD_AFFINITY == "scatter")
+            {
+                //implement threads bind by core round-robin
+                thread_mask = threadIdx%Constants.CORE_NUM; 
 
-            //implement a compact bind, 2 threads a core
-            int tpn = 2*cpn;
-            int thread_mask = threadIdx%tpn;
-            thread_mask /= 2;
+            }else
+            {
+                //default affinity compact
+                //implement a compact bind, 2 threads a core
+                int tpn = 2*Constants.CORE_NUM;
+                thread_mask = threadIdx%tpn;
+                thread_mask /= 2;
+            }
 
             bitSet.set(thread_mask);
             Affinity.setAffinity(bitSet);

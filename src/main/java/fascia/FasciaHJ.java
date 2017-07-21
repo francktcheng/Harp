@@ -12,7 +12,7 @@ import java.util.List;
  *
  * In order to refer to the original C++ version directly, the code doesn't follow the JAVA convention.
  */
-public class Fascia {
+public class FasciaHJ {
 
     /**
      * @brief read in graph data in pairs of edges
@@ -73,7 +73,7 @@ public class Fascia {
 
     }
 
-    public Fascia(String[] args)  {
+    public FasciaHJ(String[] args)  {
         FasciaOptions foption = new FasciaOptions(args);
 
         String graph_file = foption.graph_file;
@@ -89,6 +89,8 @@ public class Fascia {
         int motif = foption.motif;
         boolean timing = foption.timing;
         Constants.THREAD_NUM = foption.thread_num;
+        Constants.CORE_NUM = foption.core_num;
+        Constants.THD_AFFINITY = foption.thd_affinity;
 
         if(motif != 0){
             System.err.println("run_motif skipped");
@@ -135,7 +137,7 @@ public class Fascia {
             System.err.println("outerloop mode skipped");
         }else{
 
-            colorcount graph_count = new colorcount();
+            colorcount_HJ graph_count = new colorcount_HJ();
             graph_count.init(g, calculate_automorphism, do_gdd, do_vert, verbose);
             full_count += graph_count.do_full_count(t, iterations);
 
@@ -153,7 +155,7 @@ public class Fascia {
     public static void main(String[] args)  {
 
         long begin = System.currentTimeMillis();
-        Fascia fascia = new Fascia(args);
+        FasciaHJ fascia = new FasciaHJ(args);
         System.out.println("Total time (from beginning to end): " + (System.currentTimeMillis()-begin) + "ms");
 
     }
