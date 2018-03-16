@@ -29,6 +29,8 @@
 #include "service_error_handling.h"
 #include "service_rng.h"
 
+#include "service_thread_pinner.h"
+
 #include "threading.h"
 #include "tbb/tick_count.h"
 #include "task_scheduler_init.h"
@@ -175,6 +177,17 @@ Input::Input() : daal::algorithms::Input(10) {
 	thdwork_avg = 0;
 	thdwork_stdev = 0;
 
+#ifndef USE_OMP
+
+    //test the enabling of thread pinning
+    daal::services::interface1::thread_pinner_t*  thread_pinner = daal::services::interface1::getThreadPinner(true);
+    if(thread_pinner != NULL)
+    {
+        thread_pinner->set_pinning(true);
+    }
+
+#endif
+
 }
 
 void Input::init_comm(int mapper_num_par, int local_mapper_id_par, long send_array_limit_par, bool rotation_pipeline_par)
@@ -293,6 +306,8 @@ void Input::init_comm_tbb_kernel(int mapper_num_par, int local_mapper_id_par, lo
     int thread_num_max = threader_get_max_threads_number();
 
     int* abs_v_to_mapper_ptr = abs_v_to_mapper.getBlockPtr();
+
+    
 
     SafeStatus safeStat;
     tbb::atomic<int>* comm_mapper_tmp_atomic = reinterpret_cast<tbb::atomic<int>*>(comm_mapper_tmp);

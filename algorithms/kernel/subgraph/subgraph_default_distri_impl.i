@@ -60,6 +60,8 @@
 
 #include "subgraph_default_impl.i"
 
+#include "service_thread_pinner.h"
+
 using namespace tbb;
 using namespace daal::internal;
 using namespace daal::services::internal;
@@ -88,10 +90,8 @@ daal::services::interface1::Status subgraphDistriKernel<interm, method, cpu>::co
     int color_num = input->getColorNum();
     int s = par->_sub_itr;
     int cur_sub_vert = part->get_num_verts_sub(s);
-    // int active_sub_vert = part->get_num_verts_active(s);
-    // int cur_a_comb_num = input->choose_table[cur_sub_vert][active_sub_vert];
     int cur_comb_num = input->choose_table[color_num][cur_sub_vert];
-   
+ 
     if (stage == 0)
     {
 #ifdef USE_OMP
@@ -188,6 +188,7 @@ void subgraphDistriKernel<interm, method, cpu>::computeBottomTBB(Parameter* &par
         services::Environment::getInstance()->setNumberOfThreads(thread_num);
     else
         thread_num = threader_get_max_threads_number();
+
 
     SafeStatus safeStat;
     daal::threader_for(num_vert_g, num_vert_g, [&](int v)
@@ -726,7 +727,7 @@ void subgraphDistriKernel<interm, method, cpu>::computeNonBottomNbrSplitTBB(Para
         thread_num = threader_get_max_threads_number();
 
     tbb::atomic<double> total_count_cursub_atomic = 0.0;
-
+    
     //need a container to store all the valid_nbrs 
     int** valid_nbrs_map = new int*[num_vert_g];
     int* valid_nbrs_map_size = new int[num_vert_g];
@@ -779,7 +780,7 @@ void subgraphDistriKernel<interm, method, cpu>::computeNonBottomNbrSplitTBB(Para
     });
 
     safeStat.detach();
-
+    
     std::printf("Start the breakdown of nbrs list task\n");
     std::fflush;
     //breakdown all the valid nbrs list into small task stored in task_list vector  
@@ -1303,7 +1304,7 @@ void subgraphDistriKernel<interm, method, cpu>::updateRemoteCountsNbrSplitTBB(Pa
         services::Environment::getInstance()->setNumberOfThreads(thread_num);
     else
         thread_num = threader_get_max_threads_number();
-
+    
     //move the kernel from input class to here
     int active_child = part->get_active_index(sub_id);
     int passive_child = part->get_passive_index(sub_id);
@@ -1375,7 +1376,6 @@ void subgraphDistriKernel<interm, method, cpu>::updateRemoteCountsNbrSplitTBB(Pa
 
     //loop over all the task_list_updates
     SafeStatus safeStat;
-    // tbb::queuing_mutex tbb_mutex_update;
 
     daal::threader_for(task_update_queue_size, task_update_queue_size, [&](int t_id)
     {
@@ -1503,7 +1503,6 @@ void subgraphDistriKernel<interm, method, cpu>::updateRemoteCountsNbrSplitTBB(Pa
 
     input->task_list_update.clear();
 
-    
 
     //trace the memory usage after computation
     double compute_mem = 0.0;
@@ -1982,8 +1981,6 @@ void subgraphDistriKernel<interm, method, cpu>::updateRemoteCountsPipNbrSplitTBB
     std::memset(thdwork_record, 0, thread_num*sizeof(double));
 
     SafeStatus safeStat;
-    // tbb::queuing_mutex tbb_mutex_update;
-
     //loop over all the task_list_updates
     daal::threader_for(task_update_queue_size, task_update_queue_size, [&](int t_id)
     {
