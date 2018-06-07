@@ -10,44 +10,62 @@ For dense matrix, we support parallel I/O by using multiple java threads.</p>
 </pre></div>
 
 <p>To create a <em>HarpDAALDataSource</em> data loader for dense data:</p>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">HarpDAALDataSource</span> <span style="color: #f8f8f2">datasource</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">new</span> <span style="color: #f8f8f2">HarpDAALDataSource</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">dataFiles</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">fileDim</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">harpThreads</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">conf</span><span style="color: #f92672">);</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">HarpDAALDataSource</span> <span style="color: #f8f8f2">datasource</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">new</span> <span style="color: #f8f8f2">HarpDAALDataSource</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">harpThreads</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">conf</span><span style="color: #f92672">);</span>
 </pre></div>
 
-<p>where four parameters are required</p>
+<p>where two parameters are required</p>
 
 <ul>
-<li>List<String> dataFiles: the list of HDFS file names of input data</li>
-<li>int fileDim: the dimension of each file row (column number of dense matrix)</li>
 <li>int harpThreads: the multi-thread number used in parallel I/O, default value is the maximal available java threads</li>
 <li>Configuration conf: the Configuration handle of Harp mapper.</li>
 </ul>
 
-<p>To create a <em>HarpDAALDataSource</em> for CSR sparse data, the second argument <em>fileDim</em> is omitted.</p>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">HarpDAALDataSource</span> <span style="color: #f8f8f2">datasource</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">new</span> <span style="color: #f8f8f2">HarpDAALDataSource</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">dataFiles</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">harpThreads</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">conf</span><span style="color: #f92672">);</span>
+<h2 id="load-dense-csv-data">Load Dense CSV Data</h2>
+
+<p>To load a dense training dataset stored in CSV files from HDFS</p>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">NumericTable</span> <span style="color: #f8f8f2">inputTable</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">createDenseNumericTableInput</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">inputFiles</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">nFeatures</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">sep</span><span style="color: #f92672">,</span>  <span style="color: #f8f8f2">daal_Context</span><span style="color: #f92672">);</span>
 </pre></div>
 
-<h2 id="load-input-data-training-data">Load Input Data (Training Data)</h2>
+<p>where parameters are</p>
 
-<p>The file path of input data is already initialized during the creation of <em>HarpDAALDataSource</em> object.
-To create a dense training dataset from HDFS</p>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">NumericTable</span> <span style="color: #f8f8f2">inputTable</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">createDenseNumericTableInput</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">daal_Context</span><span style="color: #f92672">);</span>
+<ul>
+<li>inputFiles: the path to the CSV files stored in HDFS</li>
+<li>nFeatures: the dimension of each feature vector (column number of CSV file)</li>
+<li>sep: the seperator of CSV files (e.g., comma, or space)</li>
+<li>daal_Context: the DAALContext handle to create instance of DAAL NumericTable.</li>
+</ul>
+
+<p>In some cases, the CSV files shall be splitted into two dense matrix (e.g, training data and label data)</p>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">NumericTable</span><span style="color: #f92672">[]</span> <span style="color: #f8f8f2">load_table</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">.</span><span style="color: #a6e22e">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">createDenseNumericTableSplit</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">inputFiles</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">nFeatures</span><span style="color: #f92672">,</span> <span style="color: #ae81ff">1</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">sep</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">daal_Context</span><span style="color: #f92672">);</span>
+<span style="color: #f8f8f2">NumericTable</span> <span style="color: #f8f8f2">trainData</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">load_table</span><span style="color: #f92672">[</span><span style="color: #ae81ff">0</span><span style="color: #f92672">];</span>
+<span style="color: #f8f8f2">NumericTable</span> <span style="color: #f8f8f2">trainLabels</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">load_table</span><span style="color: #f92672">[</span><span style="color: #ae81ff">1</span><span style="color: #f92672">];</span>
 </pre></div>
 
-<p>To create a CSR training dataset from HDFS</p>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">NumericTable</span> <span style="color: #f8f8f2">inputTable</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">createCSRNumericTableInput</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">daal_Context</span><span style="color: #f92672">);</span>
+<p>where <em>nFeatures</em> is the feature dimension of the first NumericTable, and the label table takes 1 dimension.</p>
+
+<h2 id="load-sparse-csr-data">Load Sparse CSR Data</h2>
+
+<p>To load a CSR training dataset from HDFS</p>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">NumericTable</span> <span style="color: #f8f8f2">inputTable</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">loadCSRNumericTable</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">inputFiles</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">sep</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">context</span><span style="color: #f92672">);</span>
 </pre></div>
 
-<h2 id="load-additional-data-ground-truth-data-label-data-and-test-data">Load Additional Data (ground truth data, label data, and test data)</h2>
+<p>where the <em>nFeatures</em> parameter is not required for CSR files.</p>
 
-<p>These datasets are relatively much smaller than the training data, and their HDFS paths are
-not bind to the Harp <em>KeyValReader</em>. To load these files, we obtain their HDFS paths from
-command line arguments and explicitly invoke <em>HarpDAALDataSource</em> to load them.</p>
+<h2 id="load-sparse-distributed-coo-data">Load Sparse Distributed COO Data</h2>
 
-<p>To create a dense additional data from filenames and file dimension</p>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">NumericTable</span> <span style="color: #f8f8f2">table</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">createDenseNumericTable</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">filenames</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">fileDim</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">daal_Context</span><span style="color: #f92672">);</span>
-</pre></div>
-
-<p>To create a CSR additional data from filenames</p>
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f8f8f2">NumericTable</span> <span style="color: #f8f8f2">table</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">createCSRNumericTable</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">filenames</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">daal_Context</span><span style="color: #f92672">);</span>
+<p>As Intel DAAL has no NumericTable type dedicated to COO sparse format,
+the loading of distributed COO files takes following steps: 1) Loading distributed COO files from HDFS to harp mapper , 2)
+grouping COO entry either by their row ID or column ID, 3) regrouping COO entries across all mappers according to their row ID (or column ID),
+4) convert COO format to CSR format.</p>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #75715e">// load COO files</span>
+<span style="color: #f8f8f2">List</span><span style="color: #f92672">&lt;</span><span style="color: #f8f8f2">COO</span><span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">coo_data</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">.</span><span style="color: #a6e22e">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">loadCOOFiles</span><span style="color: #f92672">(</span><span style="color: #66d9ef">this</span><span style="color: #f92672">.</span><span style="color: #a6e22e">inputFiles</span><span style="color: #f92672">,</span><span style="color: #e6db74">&quot;,&quot;</span><span style="color: #f92672">);</span>
+<span style="color: #75715e">// group by row ID </span>
+<span style="color: #f8f8f2">HashMap</span><span style="color: #f92672">&lt;</span><span style="color: #f8f8f2">Long</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">COOGroup</span><span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">coo_group</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">.</span><span style="color: #a6e22e">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">groupCOOByIDs</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">coo_data</span><span style="color: #f92672">,</span> <span style="color: #66d9ef">true</span><span style="color: #f92672">);</span>
+<span style="color: #75715e">// create compact global ID mapping</span>
+<span style="color: #f8f8f2">HashMap</span><span style="color: #f92672">&lt;</span><span style="color: #f8f8f2">Long</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">Integer</span><span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">gid_remap</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">.</span><span style="color: #a6e22e">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">remapCOOIDs</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">coo_group</span><span style="color: #f92672">,</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">.</span><span style="color: #a6e22e">getSelfID</span><span style="color: #f92672">(),</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">.</span><span style="color: #a6e22e">getNumWorkers</span><span style="color: #f92672">(),</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">);</span>
+<span style="color: #75715e">// regrouping COO entries</span>
+<span style="color: #f8f8f2">Table</span><span style="color: #f92672">&lt;</span><span style="color: #f8f8f2">COOGroup</span><span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">regrouped_table</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">.</span><span style="color: #a6e22e">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">regroupCOOList</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">coo_group</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">gid_remap</span><span style="color: #f92672">,</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">maxCompactID</span><span style="color: #f92672">);</span>
+<span style="color: #75715e">// convert COO to CSRNumericTable</span>
+<span style="color: #f8f8f2">CSRNumericTable</span> <span style="color: #f8f8f2">trainDaalTable</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">this</span><span style="color: #f92672">.</span><span style="color: #a6e22e">datasource</span><span style="color: #f92672">.</span><span style="color: #a6e22e">COOToCSR</span><span style="color: #f92672">(</span><span style="color: #f8f8f2">regrouped_table</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">gid_remap_tran</span><span style="color: #f92672">,</span> <span style="color: #f8f8f2">daal_Context</span><span style="color: #f92672">);</span>
 </pre></div>
 </article></section></div></div></div><script src="https://code.jquery.com/jquery-2.2.1.min.js"></script><script src="https://dsc-spidal.github.io/harp/js/app.min.js"></script></body></html>
