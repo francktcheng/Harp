@@ -28,6 +28,9 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -35,6 +38,7 @@ import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.concurrent.ExecutionException;
+
 
 
 public class Initialize {
@@ -51,6 +55,8 @@ public class Initialize {
 	private Path inputPath;
 	private Path workPath;
 	private Path outputPath;
+
+    protected static final Log LOG = LogFactory.getLog(Initialize.class);
 
 	public Initialize(Configuration conf, String[] args)
 	{
@@ -69,11 +75,23 @@ public class Initialize {
 	public void loadDistributedLibs() throws Exception
 	{
 		DistributedCache.createSymlink(this.conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libJavaAPI.so#libJavaAPI.so"), this.conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbb.so.2#libtbb.so.2"), this.conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbb.so#libtbb.so"), this.conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbbmalloc.so.2#libtbbmalloc.so.2"), this.conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbbmalloc.so#libtbbmalloc.so"), this.conf);
+        if (SystemUtils.IS_OS_MAC)
+        {
+            LOG.info("Load MACOS Libs");
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libJavaAPI.dylib#libJavaAPI.dylib"), this.conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbb.dylib#libtbb.dylib"), this.conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbbmalloc.dylib#libtbbmalloc.dylib"), this.conf);
+        }
+        else
+        {
+            LOG.info("Load Linux Libs");
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libJavaAPI.so#libJavaAPI.so"), this.conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbb.so.2#libtbb.so.2"), this.conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbb.so#libtbb.so"), this.conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbbmalloc.so.2#libtbbmalloc.so.2"), this.conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libtbbmalloc.so#libtbbmalloc.so"), this.conf);
+        }
+
 	}
 
 	public void loadDistributedLibsExp() throws Exception
