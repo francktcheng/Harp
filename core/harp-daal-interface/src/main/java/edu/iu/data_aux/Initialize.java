@@ -96,12 +96,27 @@ public class Initialize {
 
 	public void loadDistributedLibsExp() throws Exception
 	{
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libiomp5.so#libiomp5.so"), conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libhdfs.so#libhdfs.so"), conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libhdfs.so.0.0.0#libhdfs.so.0.0.0"), conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libautohbw.so#libautohbw.so"), conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libmemkind.so#libmemkind.so"), conf);
-		DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libmemkind.so.0#libmemkind.so.0"), conf);	
+        if (SystemUtils.IS_OS_MAC)
+        {
+            LOG.info("Load MACOS Exp Libs");
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libiomp5.so#libiomp5.so"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libhdfs.dylib#libhdfs.dylib"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libhdfs.0.0.0.dylib#libhdfs.0.0.0.dylib"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libautohbw.so#libautohbw.so"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libmemkind.so#libmemkind.so"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libmemkind.so.0#libmemkind.so.0"), conf);
+        }
+        else
+        {
+            LOG.info("Load Linux Exp Libs");
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libiomp5.so#libiomp5.so"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libhdfs.so#libhdfs.so"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libhdfs.so.0.0.0#libhdfs.so.0.0.0"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libautohbw.so#libautohbw.so"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libmemkind.so#libmemkind.so"), conf);
+            DistributedCache.addCacheFile(new URI("/Hadoop/Libraries/libmemkind.so.0#libmemkind.so.0"), conf);
+        }
+	
 	}
 
 	public int getSysArgNum() {return this.sys_args_num;}

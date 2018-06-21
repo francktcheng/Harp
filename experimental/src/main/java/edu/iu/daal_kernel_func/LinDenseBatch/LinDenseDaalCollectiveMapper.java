@@ -163,63 +163,62 @@ public class LinDenseDaalCollectiveMapper
          * @return 
          */
         private void runLinDense(Context context) throws IOException 
-	{
-		// // ---------- load data ----------
-		NumericTable inputX = this.datasource.createDenseNumericTable(this.inputFiles, this.nFeatures, "," , this.daal_Context);
-		NumericTable inputY = this.datasource.createDenseNumericTable(this.rightfilepath, this.nFeatures, "," , this.daal_Context);
-		// test new HarpDAALNumericTable
-		HarpDAALNumericTable merged = new HarpDAALNumericTable(this.daal_Context, inputX);
-		LOG.info("HarpDAALNumericTable column number: " + merged.getNumberOfColumns());
-		merged.addPartition(inputY, 1);
-		LOG.info("HarpDAALNumericTable column number: " + merged.getNumberOfColumns() + "; num partitions " + merged.getNumberOfPartitions());
-		NumericTable get_inputX = merged.getPartition(0);
-		NumericTable get_inputY = merged.getPartition(1);
-		int row_num = (int)get_inputX.getNumberOfRows() + 5;
-		int col_num = (int)get_inputX.getNumberOfColumns() + 5;
-		HarpNumericTable inputZ = new HarpNumericTable(daal_Context, col_num, row_num);
+        {
+            // // ---------- load data ----------
+            NumericTable inputX = this.datasource.createDenseNumericTable(this.inputFiles, this.nFeatures, "," , this.daal_Context);
+            NumericTable inputY = this.datasource.createDenseNumericTable(this.rightfilepath, this.nFeatures, "," , this.daal_Context);
+            // test new HarpDAALNumericTable
+            HarpDAALNumericTable merged = new HarpDAALNumericTable(this.daal_Context, inputX);
+            LOG.info("HarpDAALNumericTable column number: " + merged.getNumberOfColumns());
+            merged.addPartition(inputY, 1);
+            LOG.info("HarpDAALNumericTable column number: " + merged.getNumberOfColumns() + "; num partitions " + merged.getNumberOfPartitions());
+            NumericTable get_inputX = merged.getPartition(0);
+            NumericTable get_inputY = merged.getPartition(1);
+            int row_num = (int)get_inputX.getNumberOfRows() + 5;
+            int col_num = (int)get_inputX.getNumberOfColumns() + 5;
+            HarpNumericTable inputZ = new HarpNumericTable(daal_Context, col_num, row_num);
 
-		for(int j=0;j<col_num;j++)
-                  inputZ.setArray(new double[row_num], j, j);
+            for(int j=0;j<col_num;j++)
+                inputZ.setArray(new double[row_num], j, j);
 
-		merged.addPartition(inputZ, 2);
-		LOG.info("HarpDAALNumericTable column number: " + merged.getNumberOfColumns() + "; num partitions " + merged.getNumberOfPartitions());
+            merged.addPartition(inputZ, 2);
+            LOG.info("HarpDAALNumericTable column number: " + merged.getNumberOfColumns() + "; num partitions " + merged.getNumberOfPartitions());
 
-		// HarpDAALNumericTable testTable = 
-		// replace this by HDFSDataSource
-		// check rightpath name
-		// LOG.info(this.rightfilepath);
-	        // HDFSDataSource inputY_source = new HDFSDataSource(this.daal_Context, this.rightfilepath, 
-		// 		DataSource.DictionaryCreationFlag.DoDictionaryFromContext,
-		// 	        DataSource.NumericTableAllocationFlag.DoAllocateNumericTable);
-                //
-		// inputY_source.loadDataBlock();
-		// NumericTable inputY = inputY_source.getNumericTable();
-		// inputY_source.dispose();
+            // replace this by HDFSDataSource
+            // check rightpath name
+            // HDFSDataSource inputY_source = new HDFSDataSource(this.daal_Context, this.rightfilepath, 
+            // 		DataSource.DictionaryCreationFlag.DoDictionaryFromContext,
+            // 	        DataSource.NumericTableAllocationFlag.DoAllocateNumericTable);
+            // //
+            // inputY_source.loadDataBlock();
+            // NumericTable inputY_hdfs = inputY_source.getNumericTable();
+            // inputY_source.DetachSourceThd();
+            // inputY_source.dispose();
 
-		/* Create an algorithm */
-		com.intel.daal.algorithms.kernel_function.linear.Batch algorithm = new com.intel.daal.algorithms.kernel_function.linear.Batch(daal_Context, Double.class);
+            /* Create an algorithm */
+            com.intel.daal.algorithms.kernel_function.linear.Batch algorithm = new com.intel.daal.algorithms.kernel_function.linear.Batch(daal_Context, Double.class);
 
-		/* Set the kernel algorithm parameter */
-		algorithm.parameter.setK(k);
-		algorithm.parameter.setB(b);
-		algorithm.parameter.setComputationMode(com.intel.daal.algorithms.kernel_function.ComputationMode.matrixMatrix);
+            /* Set the kernel algorithm parameter */
+            algorithm.parameter.setK(k);
+            algorithm.parameter.setB(b);
+            algorithm.parameter.setComputationMode(com.intel.daal.algorithms.kernel_function.ComputationMode.matrixMatrix);
 
-		/* Set an input data table for the algorithm */
-		algorithm.input.set(InputId.X, inputX);
-		algorithm.input.set(InputId.Y, inputY);
+            /* Set an input data table for the algorithm */
+            algorithm.input.set(InputId.X, inputX);
+            algorithm.input.set(InputId.Y, inputY);
 
-		/* Compute the linear kernel function */
-		com.intel.daal.algorithms.kernel_function.linear.Result result = algorithm.compute();
+            /* Compute the linear kernel function */
+            com.intel.daal.algorithms.kernel_function.linear.Result result = algorithm.compute();
 
-		/* Get the computed results */
-		NumericTable values = result.get(ResultId.values);
+            /* Get the computed results */
+            NumericTable values = result.get(ResultId.values);
 
-		/* Print the results */
-		Service.printNumericTable("Result of kernel function:", values);
+            /* Print the results */
+            Service.printNumericTable("Result of kernel function:", values);
 
-		daal_Context.dispose();
+            daal_Context.dispose();
 
-	}
+        }
 	   
     
 }
