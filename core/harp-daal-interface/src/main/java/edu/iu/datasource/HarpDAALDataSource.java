@@ -467,6 +467,50 @@ public class HarpDAALDataSource
 
    }//}}}
 
+   public Table<COOGroup> regroupCOOListRandom(HashMap<Long,COOGroup> input_map, CollectiveMapper mapper, int[] gmaxRowID)
+   {//{{{
+
+           int maxRowID = -1;
+           Table<COOGroup> regroup_table = new Table<>(0, new COOGroupCombiner(), input_map.size());
+
+	   for(Map.Entry<Long, COOGroup> entry : input_map.entrySet())
+	   {
+		   Long key = entry.getKey();
+		   COOGroup val = entry.getValue();
+		   int mapID = (int)key.longValue(); 
+		   regroup_table.addPartition(new Partition<>(mapID, val));
+		   if (mapID > maxRowID)
+			   maxRowID = mapID;
+
+	   }
+
+	   int num_par_prev = regroup_table.getNumPartitions();
+	   Table<IntArray> maxRowTable = new Table<>(0, new IntArrMax());
+
+	   IntArray maxrowArray = IntArray.create(1, false);
+	   maxrowArray.get()[0] = maxRowID;
+	   maxRowTable.addPartition(new Partition<>(0, maxrowArray));
+
+	   mapper.allreduce("coo", "get-max-rowID", maxRowTable);
+
+	   // from local max row id to global max row id
+	   maxRowID = maxRowTable.getPartition(0).get().get()[0];
+	   maxRowTable.release();
+	   maxRowTable = null;
+	   LOG.info("Num pars before regroup " + num_par_prev + ", global maxRowID " + maxRowID);
+	   gmaxRowID[0] = maxRowID;
+
+	   long seed = System.currentTimeMillis();
+	   
+           mapper.regroup("coo", "regroup-coo", regroup_table, new COORegroupRandomPartitioner(maxRowID, seed, mapper.getNumWorkers()));
+	   mapper.barrier("coo", "finish-regroup");
+
+	   int num_par_cur = regroup_table.getNumPartitions();
+	   LOG.info("Num pars after regroup " + num_par_cur);
+	   return regroup_table;
+
+   }//}}}
+
    public CSRNumericTable COOToCSR(Table<COOGroup> inputTable, HashMap<Long, Integer> remapIDs, DaalContext daal_Context)
    {//{{{
 	   int num_pars = inputTable.getNumPartitions();

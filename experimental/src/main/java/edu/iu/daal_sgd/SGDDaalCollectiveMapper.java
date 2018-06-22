@@ -97,6 +97,7 @@ public class SGDDaalCollectiveMapper
 		private List<String> inputFiles;
 		private Configuration conf;
 		private static HarpDAALDataSource datasource;
+  		private static HarpDAALComm harpcomm;	
 		private static DaalContext daal_Context = new DaalContext();
 
 
@@ -214,8 +215,9 @@ public class SGDDaalCollectiveMapper
 				this.inputFiles.add(value);
 			}
 
-	    		this.datasource = new HarpDAALDataSource(harpThreads, conf);
-
+			this.datasource = new HarpDAALDataSource(harpThreads, conf);
+			// create communicator
+			this.harpcomm= new HarpDAALComm(this.getSelfID(), this.getMasterID(), this.getNumWorkers(), this.daal_Context, this);
 			try {
 				runSGD(context);
 			} catch (Exception e) {
@@ -227,8 +229,6 @@ public class SGDDaalCollectiveMapper
 		/**
 		 * @brief running MF-SGD 
 		 *
-		 * @param vFilePaths
-		 * @param configuration
 		 * @param context
 		 *
 		 * @return 
@@ -239,10 +239,12 @@ public class SGDDaalCollectiveMapper
 			LOG.info("Use Model Parallelism");
 
 			//----------------------- load the train dataset-----------------------
+			//groupped by row ids
 			Int2ObjectOpenHashMap<VRowCol> vRowMap =
 				SGDUtil.loadVWMap(this.inputFiles, numThreads, this.conf);
 
 			//-----------------------load the test dataset-----------------------
+			//groupped by col ids
 			Int2ObjectOpenHashMap<VRowCol> testVColMap =
 				SGDUtil.loadTestVHMap(testFilePath, this.conf, numThreads);
 
