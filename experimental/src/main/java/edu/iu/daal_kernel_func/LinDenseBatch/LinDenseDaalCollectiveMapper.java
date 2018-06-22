@@ -186,14 +186,14 @@ public class LinDenseDaalCollectiveMapper
 
             // replace this by HDFSDataSource
             // check rightpath name
-            // HDFSDataSource inputY_source = new HDFSDataSource(this.daal_Context, this.rightfilepath, 
-            // 		DataSource.DictionaryCreationFlag.DoDictionaryFromContext,
-            // 	        DataSource.NumericTableAllocationFlag.DoAllocateNumericTable);
-            // //
-            // inputY_source.loadDataBlock();
-            // NumericTable inputY_hdfs = inputY_source.getNumericTable();
-            // inputY_source.DetachSourceThd();
-            // inputY_source.dispose();
+            HDFSDataSource inputY_source = new HDFSDataSource(this.daal_Context, this.rightfilepath, 
+            		DataSource.DictionaryCreationFlag.DoDictionaryFromContext,
+            	        DataSource.NumericTableAllocationFlag.DoAllocateNumericTable);
+            //
+            inputY_source.loadDataBlock();
+            NumericTable inputY_hdfs = inputY_source.getNumericTable();
+            inputY_source.DetachSourceThd();
+            inputY_source.dispose();
 
             /* Create an algorithm */
             com.intel.daal.algorithms.kernel_function.linear.Batch algorithm = new com.intel.daal.algorithms.kernel_function.linear.Batch(daal_Context, Double.class);
